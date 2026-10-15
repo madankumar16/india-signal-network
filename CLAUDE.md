@@ -8,7 +8,7 @@ Static single-page site. No build step. Everything is in `index.html` (~1.2 MB; 
 - `README.md` — short public description.
 
 ## Live layer
-On claude.ai the page subscribes to `window.claude.use("db")` → doc `live/ioda` for hourly updates. That API doesn't exist off claude.ai, so on any other host the page falls back to the embedded `live0` snapshot (the code returns early when `window.claude` is missing). To keep it fresh elsewhere, regenerate `live0`/`ioda.json` from
+On claude.ai the page subscribes to `window.claude.use("db")` → doc `live/ioda` for hourly updates. That API doesn't exist off claude.ai, so on any other host the page falls back to the embedded `live0` snapshot (the code returns early when `window.claude` is missing). Off claude.ai it is kept fresh by `.github/workflows/refresh-ioda.yml`, which runs `scripts/refresh_ioda.py` hourly and pushes (Vercel redeploys on push). The script regenerates `live0`/`ioda.json` from
 `https://api.ioda.inetintel.cc.gatech.edu/v2/outages/events?entityType=region&relatedTo=country/IN&from=<T-86400>&until=<T>&format=ioda`
 (name mapping: Orissa→Odisha, Uttaranchal→Uttarakhand, "Jammu and Kashmir"→"Jammu & Kashmir", "Andaman and Nicobar"→"Andaman & Nicobar", Dadra/Daman→"Dadra & Nagar Haveli and Daman & Diu"; an event is ongoing if until is within 1200 s of T).
 
