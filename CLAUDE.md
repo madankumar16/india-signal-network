@@ -4,7 +4,7 @@ Static single-page site. No build step. Everything is in `index.html` (~1.2 MB; 
 
 ## Files
 - `index.html` — the whole site. Loads three.js r128 (cdnjs) and OrbitControls (jsdelivr). Data is embedded in `<script type="application/json">` blocks: `geo` (state boundaries), `live0` (IODA outage snapshot), plus district data.
-- `ioda.json` — the same IODA snapshot as `live0` (15 Oct 2026, 19:46 IST; Madhya Pradesh and Chhattisgarh in outage).
+- `ioda.json` — the same IODA snapshot as `live0` (15 Oct 2026, 20:47 IST; Madhya Pradesh and Chhattisgarh in outage).
 - `README.md` — short public description.
 
 ## Live layer
