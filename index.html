@@ -215,7 +215,7 @@ footer{padding-block:40px 56px;font-size:12.5px;color:var(--faint);border-top:1p
       </div>
       <div class="row2">
         <span class="label">Network</span>
-        <div class="seg" id="view" role="group" aria-label="Network view"><button data-v="tower" aria-pressed="true">Tower</button><button data-v="land" aria-pressed="false">Land</button><button data-v="sat" aria-pressed="false">Satellite</button></div>
+        <div class="seg" id="view" role="group" aria-label="Network view"><button data-v="tower" aria-pressed="true">Tower</button><button data-v="land" aria-pressed="false">Land</button><button data-v="sat" aria-pressed="false">Satellite</button><button data-v="shortage" aria-pressed="false">Shortage</button></div>
         <input id="find" list="dl" placeholder="Find a district…" aria-label="Find a district" autocomplete="off"><datalist id="dl"></datalist>
       </div>
       <div class="chips" id="chips"></div>
@@ -278,6 +278,7 @@ footer{padding-block:40px 56px;font-size:12.5px;color:var(--faint);border-top:1p
     <div class="notes">
       <p>Every number on the map is published data and was re-checked against the original release on 14 October 2026. Every district is drawn with its real boundary (datta07/INDIAN-SHAPEFILES district layer, simplified to about 1 km) and coloured by network: green runs smoothly (5G available; DoT reports 5G in every district), yellow 4G only (no district at present), brown the districts on the approximate Amritsar–Bathinda rail route where TRAI logged BSNL 3G (Mar 2026), red not reachable right now. Speeds in the panels come from TRAI drive tests (Feb–May 2026). Live layer: district dots in the Tower view are coloured from IODA, Georgia Tech's Internet Outage Detection and Analysis project, which measures reachability for every Indian state every 10 minutes. An hourly task copies its last 24 hours of alerts into this page: red means an outage alert is still open for that state, green means none. IODA reports by state, so every district in a state with an open alert turns red together. Everything else is the latest published data, with its date.</p>
       <p>A district counts as 5G once service exists in it, usually its towns. Villages inside a "5G district" can still be 4G-only or uncovered, so the map shows places, not filled states.</p>
+      <p>Shortage view: each district takes its state's result on three checks, one point each. Mobile use below the national 89.71 connections per 100 people (TRAI service area, Jun 2026); 20 or more village 4G towers still to build per district (4G Saturation Project, Feb 2026); and villages with no mobile network at all (Northeast, Feb 2026). A live IODA outage alert for the state overrides the score. These are state figures, so a well-served city inside a short state is shaded the same as its villages.</p>
       <p>India has almost no 3G left. Brown appears only where a 2026 TRAI drive test still logged 3G.</p>
       <p>District dots: 5G is reported at district level (99.9% of districts, DoT). Fibre and satellite figures are published only by state; a district shows its state's figure, and "per district" is that figure divided by the state's districts. A low fibre count can mean fewer gram panchayats or a state-run network, not necessarily worse service.</p>
       <p>Satellites: GSAT-19 (48°E), GSAT-29 (55°E), GSAT-N2 (68°E) and GSAT-11 (74°E) are ISRO's high-throughput internet satellites. They are drawn above the map for clarity; real geostationary satellites sit about 36,000 km above the equator. Starlink and Eutelsat OneWeb are not shown because their Indian service has not launched.</p>
@@ -482,7 +483,9 @@ const vRange=[];let dGeoAll,dMesh,dLines;
   const lg=new THREE.BufferGeometry();lg.setAttribute("position",new THREE.Float32BufferAttribute(seg,3));
   dLines=new THREE.LineSegments(lg,new THREE.LineBasicMaterial({color:0xffffff,transparent:true,opacity:.75}));
   const dg=new THREE.Group();dg.add(dMesh,dLines);dg.scale.y=.001;scene.add(dg);dMesh.userData.grp=dg}
-function distColor(i){const st=DIST[i][1];if(view==="tower")return COL[statusOf(i)];if(view==="land"){const t=landTier(st);return t<0?"#e3e6e9":LANDC[t]}return"#e4e7ea"}
+const SHC=["#e3e6e9","#f3cf8a","#e8893f","#c4352b"],SH_CUT="#6e1420";  // shortage view: 0–3 checks failed; cut off now
+function distColor(i){const st=DIST[i][1];if(view==="tower")return COL[statusOf(i)];if(view==="land"){const t=landTier(st);return t<0?"#e3e6e9":LANDC[t]}
+  if(view==="shortage"){const s=shortOf(st);return s.cut?SH_CUT:SHC[s.n]}return"#e4e7ea"}
 function paint(i){const C=dGeoAll.attributes.color.array,col=new THREE.Color(distColor(i));if(i===hoverD)col.offsetHSL(0,0,.1);const[v0,n]=vRange[i];
   for(let k=v0;k<v0+n;k++){C[k*3]=col.r;C[k*3+1]=col.g;C[k*3+2]=col.b}dGeoAll.attributes.color.needsUpdate=true}
 const districtAt=face=>{const vi=face*3;let lo=0,hi=ND-1;while(lo<hi){const m=(lo+hi+1)>>1;if(vRange[m][0]<=vi)lo=m;else hi=m-1}return lo};
@@ -501,7 +504,8 @@ function colorDistricts(){
   for(let i=0;i<ND;i++)paint(i);
   const L1={tower:`<span><i style="background:${COL.g5}"></i>Green: network runs smoothly (5G)</span><span><i style="background:${COL.g4}"></i>Yellow: 4G</span><span><i style="background:${COL.g3}"></i>Brown: 3G</span><span><i style="background:${COL.g0}"></i>Red: network not reachable</span><span><span class="blink"></span>Red is live: outage alert for the district\'s state now (IODA, hourly)</span>`,
     land:`<span><i style="background:${LANDC[4]}"></i>600+ BharatNet gram panchayats per district</span><span><i style="background:${LANDC[3]}"></i>300–600</span><span><i style="background:${LANDC[2]}"></i>100–300</span><span><i style="background:${LANDC[1]}"></i>under 100</span><span><i style="background:${LANDC[0]}"></i>none listed</span><span>Each district shows its state\'s average, BharatNet, Feb 2026</span>`,
-    sat:`<span><i style="background:#7a4fb5"></i>Purple lines: regions each satellite serves</span><span>Satellites drawn above the map; real ones are about 36,000 km up</span><span>Consumer satellite broadband: not launched yet</span>`};
+    sat:`<span><i style="background:#7a4fb5"></i>Purple lines: regions each satellite serves</span><span>Satellites drawn above the map; real ones are about 36,000 km up</span><span>Consumer satellite broadband: not launched yet</span>`,
+    shortage:`<span><i style="background:${SH_CUT}"></i>Cut off now: live outage alert (IODA)</span><span><i style="background:${SHC[3]}"></i>Short on all 3 checks</span><span><i style="background:${SHC[2]}"></i>2 of 3</span><span><i style="background:${SHC[1]}"></i>1 of 3</span><span><i style="background:${SHC[0]}"></i>none</span><span><i style="background:#121416"></i>Pins: remote belts with villages lacking signal or towers</span><span>Checks, by state: mobile use below the national 89.71 per 100 · 20+ village 4G towers still to build per district · villages with no mobile network</span>`};
   document.getElementById("vleg").innerHTML=L1[view];
 }
 colorDistricts();
@@ -511,7 +515,7 @@ const REAL={
  sat:[["4","ISRO internet satellites","#7a4fb5"],["48 Gbps","GSAT-N2 capacity"],["≈5,000","remote gram panchayats on satellite · 2020 contract"],["Not launched","Starlink, OneWeb, Jio satellite · Sep 2026"]]};
 function liveChip(){const c=liveCounts(),age=(Date.now()/1000-LIVE.updatedAt)/3600;
   return `<div class="rt now"><b><span class="blink"></span>${c.out} state${c.out===1?"":"s"} with outage now</b><span>IODA · updated ${istTime(LIVE.updatedAt)} IST${age>3?" · older than 3 h":""} · ${c.rec} recovered in last 24 h</span></div>`}
-function drawReal(){document.getElementById("realtop").innerHTML=(view==="tower"?liveChip():"")+REAL[view].map(([b,s,c])=>`<div class="rt${c?" live":""}" style="${c?"--c:"+c:""}"><b>${b}</b><span>${s}</span></div>`).join("")}
+function drawReal(){document.getElementById("realtop").innerHTML=(view==="tower"||view==="shortage"?liveChip():"")+REAL[view].map(([b,s,c])=>`<div class="rt${c?" live":""}" style="${c?"--c:"+c:""}"><b>${b}</b><span>${s}</span></div>`).join("")}
 drawReal();
 document.getElementById("dl").innerHTML=DIST.map(d=>`<option value="${d[0]}, ${d[1]}">`).join("");
 
@@ -519,10 +523,28 @@ document.getElementById("dl").innerHTML=DIST.map(d=>`<option value="${d[0]}, ${d
    Table 1.22, Indian Telecom Services Performance Indicators Apr–Jun 2026. Service areas cover several states. */
 const TD={"Andhra Pradesh":[78.13,118.21,95.55],"Assam":[58.56,196.00,80.51],"Bihar":[45.72,150.24,62.34],"Delhi":[null,null,341.63],"Gujarat":[71.08,119.36,95.74],"Haryana":[67.96,109.26,86.15],"Himachal Pradesh":[89.62,421.76,124.13],"Jammu & Kashmir":[70.11,160.18,98.43],"Karnataka":[70.80,180.75,121.39],"Kerala":[null,null,117.75],"Madhya Pradesh":[45.58,134.78,71.50],"Maharashtra":[64.88,156.05,110.28],"North East":[65.21,112.52,82.59],"Odisha":[62.34,162.17,81.75],"Punjab":[63.97,163.71,109.11],"Rajasthan":[57.96,145.65,81.71],"Tamil Nadu":[73.64,124.75,102.02],"Uttar Pradesh":[50.76,126.83,69.87],"West Bengal":[59.14,114.46,80.35]};
 const TD_ALL=89.71;
-const LSA={"Telangana":"Andhra Pradesh","Jharkhand":"Bihar","Dadra & Nagar Haveli":"Gujarat","Daman & Diu":"Gujarat","Ladakh":"Jammu & Kashmir","Lakshadweep":"Kerala","Chhattisgarh":"Madhya Pradesh","Goa":"Maharashtra","Arunachal Pradesh":"North East","Manipur":"North East","Meghalaya":"North East","Mizoram":"North East","Nagaland":"North East","Tripura":"North East","Chandigarh":"Punjab","Puducherry":"Tamil Nadu","Uttarakhand":"Uttar Pradesh","Sikkim":"West Bengal","Andaman & Nicobar":"West Bengal"};
+const LSA={"Telangana":"Andhra Pradesh","Jharkhand":"Bihar","Dadra & Nagar Haveli":"Gujarat","Daman & Diu":"Gujarat","Dadra & Nagar Haveli and Daman & Diu":"Gujarat","Ladakh":"Jammu & Kashmir","Lakshadweep":"Kerala","Chhattisgarh":"Madhya Pradesh","Goa":"Maharashtra","Arunachal Pradesh":"North East","Manipur":"North East","Meghalaya":"North East","Mizoram":"North East","Nagaland":"North East","Tripura":"North East","Chandigarh":"Punjab","Puducherry":"Tamil Nadu","Uttarakhand":"Uttar Pradesh","Sikkim":"West Bengal","Andaman & Nicobar":"West Bengal"};
 const lsaOf=st=>LSA[st]||st;
 const tdOf=st=>TD[lsaOf(st)]||null;
 const NE_GAP={"Arunachal Pradesh":1176,"Assam":163,"Manipur":189,"Mizoram":52,"Nagaland":107,"Tripura":7};
+/* SHORTAGE view: where communication falls short, by state (a district shows its state's figures). One point per check:
+   use  – mobile connections per 100 people in the state's TRAI service area below the national 89.71 (Jun 2026)
+   tow  – 20 or more village 4G towers still to build per district (4G Saturation Project, 28 Feb 2026)
+   dark – villages with no mobile network at all (Northeast, DoT via The Sentinel, Feb 2026)
+   A live IODA outage alert for the state overrides the score ("cut off now"). */
+function shortOf(st){const td=tdOf(st),row=STATES.find(r=>r[0]===(STATE_ALIAS[st]||st)),pend=row?row[4]:0,per=pend/DCOUNT[st],lv=liveOf(st);
+  const use=!!(td&&td[2]<TD_ALL),tow=per>=20,dark=!!NE_GAP[st];
+  return{td:td?td[2]:null,pend,per,gap:NE_GAP[st]||0,use,tow,dark,n:use+tow+dark,cut:!!(lv&&lv.status==="outage")}}
+const SH_NAME=s=>s.cut?"cut off now":["no shortage flagged","short on 1 of 3","short on 2 of 3","short on all 3"][s.n];
+function shortBlk(st){const s=shortOf(st),ck=(f,t)=>`<p><b style="font:500 11px var(--mono);letter-spacing:.08em;color:${f===null?"var(--faint)":f?COL.g0:COL.g5}">${f===null?"NO DATA":f?"SHORT":"OK"}</b> · ${t}</p>`;
+  return `<div class="blk"><h4><i style="width:9px;height:9px;border-radius:50%;background:${s.cut?SH_CUT:SHC[s.n]}"></i>Shortage<em>state figures</em></h4>
+    <div class="v">${SH_NAME(s)[0].toUpperCase()+SH_NAME(s).slice(1)}</div>
+    ${s.cut?`<p>IODA reports a live outage for networks in ${st}; some connections may not work at all right now.</p>`:""}
+    ${ck(s.td===null?null:s.use,s.td?`Mobile use: ${s.td.toFixed(2)} connections per 100 people in the ${lsaOf(st)} service area, against 89.71 nationally (TRAI, Jun 2026).`:"Mobile use: no TRAI service-area figure.")}
+    ${ck(s.tow,`Village towers: ${s.pend.toLocaleString("en-IN")} 4G towers still to build in ${st}, about ${s.per.toFixed(1)} per district (Feb 2026).`)}
+    ${ck(s.gap?true:null,s.gap?`No signal: ${s.gap.toLocaleString("en-IN")} villages in ${st} have no mobile network (Feb 2026).`:`No signal: no state count of villages without network published.`)}</div>`}
+REAL.shortage=[["9,269","village 4G towers still to build · Feb 2026","#c4352b"],["1,841","Northeast villages with no mobile network · Feb 2026"],
+  [`${Object.keys(DCOUNT).filter(st=>shortOf(st).use).length} states/UTs`,"below national mobile use (89.71 per 100) · TRAI"],["49 vs 129","internet subscriptions per 100 people, rural vs urban · TRAI"]];
 /* ---------- ISRO internet satellites above India ----------
    Real geostationary slots are ~36,000 km above the equator; here they float above the map,
    spread west→east in the order of their true longitudes (48°E → 74°E). */
@@ -577,7 +599,10 @@ drawChips();
 function applyVis(){towers.forEach(t=>t.grp.visible=view==="tower"&&on[t.d[3]]);document.getElementById("chips").style.display="none";
   // strict views: Tower = towers + district dots, Land = district dots only, Satellite = satellites only
   towers.forEach(t=>t.grp.visible=false);satGroup.visible=view==="sat";
-  if(selected&&((selected.kind==="sat"&&view!=="sat")||(selected.kind==="tower"&&view!=="tower")||(selected.kind==="district"&&view==="sat")))select(null);drawReal()}
+  // Shortage view: the no-signal belts stand up as dark pins so they read against the red districts
+  const sh=view==="shortage";towers.forEach(t=>{if(t.d[3]!=="g0")return;t.grp.visible=sh;t.beam.visible=sh;t.beam.scale.set(3,4.6,3);
+    const c=sh?0x121416:COL.g0;t.head.material.color.set(c);t.head.material.emissive.set(sh?0x000000:COL.g0);t.beam.material.color.set(c)});
+  if(selected&&((selected.kind==="sat"&&view!=="sat")||(selected.kind==="tower"&&view!=="tower"&&!(sh&&selected.d[3]==="g0"))||(selected.kind==="district"&&view==="sat")))select(null);drawReal()}
 document.querySelectorAll("#view button").forEach(b=>b.onclick=()=>{view=b.dataset.v;document.querySelectorAll("#view button").forEach(x=>x.setAttribute("aria-pressed",x===b));colorDistricts();applyVis();drawPanel()});
 applyVis();
 document.getElementById("find").addEventListener("change",e=>{const v=e.target.value.trim().toLowerCase();const i=DIST.findIndex(d=>(d[0]+", "+d[1]).toLowerCase()===v)>=0?DIST.findIndex(d=>(d[0]+", "+d[1]).toLowerCase()===v):DIST.findIndex(d=>d[0].toLowerCase().startsWith(v));if(i>=0){select({kind:"district",i});e.target.blur()}});
@@ -600,7 +625,8 @@ function drawPanel(){
   const P=$("panel");
   if(!selected){const T={tower:["Towers","Every district is drawn with its real boundary and coloured by network: green runs smoothly (5G), yellow 4G, brown 3G, red not reachable right now. Choose a district."],
       land:["Land lines","Each dot is a district, shaded by how many gram panchayats per district its state has connected under BharatNet (28 Feb 2026). Choose a district."],
-      sat:["Satellites","Four ISRO high-throughput satellites carry internet to remote India. Choose a satellite to see its orbit, launch and capacity; purple lines show the regions it serves."]}[view];
+      sat:["Satellites","Four ISRO high-throughput satellites carry internet to remote India. Choose a satellite to see its orbit, launch and capacity; purple lines show the regions it serves."],
+      shortage:["Shortage","Where communication falls short. Each district takes its state's result on three published checks: mobile use below the national average, a large backlog of village 4G towers, and villages with no mobile network at all. Darker means short on more; the darkest red is a live outage now. Dark pins mark remote belts without signal. Choose a district or a pin."]}[view];
     P.innerHTML=`<div class="card"><div class="label">${T[0]} view</div><h3>Choose something on the map</h3><p>${T[1]}</p><p class="note">Use the joystick to rotate and tilt, or the search box to jump to a district.</p></div>`;return}
   if(selected&&selected.kind==="tower"){
     const d=selected.d,c=CAT[d[3]];
@@ -627,6 +653,7 @@ function drawPanel(){
     const lvTxt=lvs==="outage"?`Outage detected now. IODA flags a drop in ${lv.events.filter(e=>!e.until).map(e=>e.src==="bgp"?"routes visible to the internet (BGP)":"devices answering probes").join(" and ")} for networks in ${st}, ongoing since ${istTime(Math.min(...lv.events.filter(e=>!e.until).map(e=>e.from)))} IST. Some networks here may be unreachable.`:
       lvs==="recovered"?`Reachable now. A short disruption was detected ${lv.events.map(e=>istTime(e.from)+"–"+istTime(e.until).split(", ").pop()).join("; ")} IST and has ended.`:`Reachable now. No outage alert in the last 24 hours.`;
     P.innerHTML=`<div class="card"><div class="label">District · ${st}</div><h3>${dn}</h3>
+     ${view==="shortage"?shortBlk(st):""}
      <div class="blk"><h4><span class="blink" style="background:${lvs==="outage"?COL.g0:COL.g5}"></span>Live now<em>state · IODA</em></h4>
        <div class="v">${lvs==="outage"?"Not reachable (outage alert)":"Network runs smoothly"}</div><p>${lvTxt}</p><p class="note">Updated ${istTime(LIVE.updatedAt)} IST.</p></div>
      ${BROWN.has(selected.i)?`<div class="blk"><h4><i style="width:9px;height:9px;border-radius:50%;background:${COL.g3}"></i>3G logged<em>TRAI · Mar 2026</em></h4><p>This district lies on the approximate Amritsar–Bathinda rail route, where TRAI's drive test found BSNL still falling back to 3G (18.36 Mbps down). Jio (111.72) and Airtel (95.82) measured 5G/4G on the same route.</p></div>`:""}
@@ -678,7 +705,7 @@ function pick(cx,cy){
 canvas.addEventListener("pointermove",e=>{
   if(e.pointerType!=="mouse")return;hovered=pick(e.clientX,e.clientY);
   {const nd=hovered&&hovered.kind==="district"?hovered.i:-1;if(nd!==hoverD){const o=hoverD;hoverD=nd;if(o>=0)paint(o);if(nd>=0)paint(nd)}}
-  if(hovered){tip.textContent=hovered.kind==="tower"?hovered.d[1]+" · "+CAT[hovered.d[3]].name:hovered.kind==="district"?DIST[hovered.i][0]+", "+DIST[hovered.i][1]+(view==="tower"?" · "+STATUS_NAME[statusOf(hovered.i)]:""):hovered.kind==="sat"?hovered.S.name+" · ISRO satellite":hovered.name;tip.style.left=e.clientX+"px";tip.style.top=e.clientY+"px";tip.classList.add("show");canvas.style.cursor="pointer"}
+  if(hovered){tip.textContent=hovered.kind==="tower"?hovered.d[1]+" · "+CAT[hovered.d[3]].name:hovered.kind==="district"?DIST[hovered.i][0]+", "+DIST[hovered.i][1]+(view==="tower"?" · "+STATUS_NAME[statusOf(hovered.i)]:view==="shortage"?" · "+SH_NAME(shortOf(DIST[hovered.i][1])):""):hovered.kind==="sat"?hovered.S.name+" · ISRO satellite":hovered.name;tip.style.left=e.clientX+"px";tip.style.top=e.clientY+"px";tip.classList.add("show");canvas.style.cursor="pointer"}
   else{tip.classList.remove("show");canvas.style.cursor=""}
 });
 canvas.addEventListener("pointerleave",()=>{hovered=null;if(hoverD>=0){const o=hoverD;hoverD=-1;paint(o)}tip.classList.remove("show")});
@@ -704,7 +731,7 @@ function frame(now){
   towers.forEach(t=>{
     const d=t.d;t.grp.position.y=t.pos.y-H+H*Math.max(ease(Math.min((now-t0)/1400,1)),0);
     const sel=t===selected||t===hovered;t.head.scale.setScalar(.5*intro*(sel?1.7:1));
-    t.head.position.y=.3;
+    if(t.beam.visible){t.head.scale.setScalar(1.7*intro*(sel?1.3:1));t.head.position.y=4.9}else t.head.position.y=.3;
   });
   {const k=Math.min((now-t0)/1400,1);dMesh.userData.grp.scale.y=Math.max(ease(k),.001)}
   if(satGroup.visible){const hi=true;SATS.forEach((S,k)=>{S.g.position.y=34+(k%2)*3+Math.sin(now/900+k)*.4;S.g.rotation.y=Math.sin(now/3000+k)*.15;
