@@ -1,1 +1,1 @@
-{"source": "IODA (Georgia Tech Internet Outage Detection and Analysis)", "updatedAt": 1792490074, "window": "last 24 hours", "states": {"Madhya Pradesh": {"status": "recovered", "events": [{"src": "bgp", "from": 1791200700, "until": 1792410300, "score": 29710.6}]}, "Chhattisgarh": {"status": "recovered", "events": [{"src": "bgp", "from": 1791200700, "until": 1792410300, "score": 95261.5}]}}}
+{"source": "IODA (Georgia Tech Internet Outage Detection and Analysis)", "updatedAt": 1792507920, "window": "last 24 hours", "states": {}}
