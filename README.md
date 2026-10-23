@@ -43,7 +43,7 @@
 - An outage counts as **ongoing** if it ended within the last 20 minutes.
 - Old state names are fixed to current ones (for example, Orissa → Odisha).
 - The refresh runs daily at about 06:07 IST. GitHub can delay scheduled runs, so the time is approximate. You can also start it by hand from the Actions tab.
-- If only the timestamp would change (the outage data is the same as the saved snapshot), nothing is committed, so the "updated" time on the page shows when the outage data last changed.
+- At most one commit a day, so the "updated" time on the page is never more than about a day old.
 
 ---
 
