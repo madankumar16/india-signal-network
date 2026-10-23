@@ -2,7 +2,7 @@
 
 <p align="center">
   An interactive 3D map of how India gets online — mobile, landline and satellite —<br>
-  with outage alerts for each state that refresh every hour.
+  with outage alerts for each state that refresh once a day.
 </p>
 
 <p align="center">
@@ -28,7 +28,7 @@
 ## 🔄 How the outage data stays fresh
 
 ```text
- GitHub Actions (every hour)
+ GitHub Actions (once a day)
         │
         ▼
  scripts/refresh_ioda.py ──► asks IODA for India's state outages (last 24 h)
@@ -37,12 +37,13 @@
  updates ioda.json + the data inside index.html
         │
         ▼
- commits only if something changed ──► the new commit goes live on Vercel
+ commits only if the outage data changed ──► the new commit goes live on Vercel
 ```
 
 - An outage counts as **ongoing** if it ended within the last 20 minutes.
 - Old state names are fixed to current ones (for example, Orissa → Odisha).
-- GitHub can delay scheduled runs, so "hourly" is approximate.
+- The refresh runs daily at about 06:07 IST. GitHub can delay scheduled runs, so the time is approximate. You can also start it by hand from the Actions tab.
+- If only the timestamp would change (the outage data is the same as the saved snapshot), nothing is committed, so the "updated" time on the page shows when the outage data last changed.
 
 ---
 
@@ -69,7 +70,7 @@ python scripts/refresh_ioda.py
 | `index.html` | The whole site — map, data and styling |
 | `ioda.json` | Latest saved outage snapshot |
 | `scripts/refresh_ioda.py` | Downloads fresh outage data |
-| `.github/workflows/refresh-ioda.yml` | Runs the refresh every hour |
+| `.github/workflows/refresh-ioda.yml` | Runs the refresh once a day |
 | `vercel.json` | Hosting settings |
 
 ---
