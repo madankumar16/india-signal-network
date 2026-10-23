@@ -514,7 +514,7 @@ const REAL={
  land:[["2.21 lakh","gram panchayats service-ready · Jun 2026","#2b5d84"],["2,17,805","in the state table · 28 Feb 2026"],["47.73 M","wired internet subscriptions · TRAI, Jun 2026"],["12.94 M","5G home broadband (FWA) · TRAI, Jun 2026"]],
  sat:[["4","ISRO internet satellites","#7a4fb5"],["48 Gbps","GSAT-N2 capacity"],["≈5,000","remote gram panchayats on satellite · 2020 contract"],["Not launched","Starlink, OneWeb, Jio satellite · Sep 2026"]]};
 function liveChip(){const c=liveCounts(),age=(Date.now()/1000-LIVE.updatedAt)/3600;
-  return `<div class="rt now"><b><span class="blink"></span>${c.out} state${c.out===1?"":"s"} with outage now</b><span>IODA · updated ${istTime(LIVE.updatedAt)} IST${age>3?" · older than 3 h":""} · ${c.rec} recovered in last 24 h</span></div>`}
+  return `<div class="rt now"><b><span class="blink"></span>${c.out} state${c.out===1?"":"s"} with outage now</b><span>IODA · updated ${istTime(LIVE.updatedAt)} IST${age>26?" · older than a day":""} · ${c.rec} recovered in last 24 h</span></div>`}
 function drawReal(){document.getElementById("realtop").innerHTML=(view==="tower"||view==="shortage"?liveChip():"")+REAL[view].map(([b,s,c])=>`<div class="rt${c?" live":""}" style="${c?"--c:"+c:""}"><b>${b}</b><span>${s}</span></div>`).join("")}
 drawReal();
 document.getElementById("dl").innerHTML=DIST.map(d=>`<option value="${d[0]}, ${d[1]}">`).join("");
