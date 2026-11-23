@@ -1,1 +1,1 @@
-{"source": "IODA (Georgia Tech Internet Outage Detection and Analysis)", "updatedAt": 1795332280, "window": "last 24 hours", "states": {"Dadra & Nagar Haveli and Daman & Diu": {"status": "outage", "events": [{"src": "bgp", "from": 1794373200, "until": null, "score": 18216.1}]}}}
+{"source": "IODA (Georgia Tech Internet Outage Detection and Analysis)", "updatedAt": 1795421411, "window": "last 24 hours", "states": {"Dadra & Nagar Haveli and Daman & Diu": {"status": "outage", "events": [{"src": "bgp", "from": 1794373200, "until": null, "score": 19909.0}]}}}
